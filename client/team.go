@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -30,7 +31,7 @@ func (c *Client) CreateTeam(ctx context.Context, request TeamCreateRequest) (r T
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &r)
@@ -45,7 +46,7 @@ func (c *Client) DeleteTeam(ctx context.Context, teamID string) error {
 	})
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 		body:   "",
 	}, nil)
@@ -59,7 +60,7 @@ func (c *Client) GetTeam(ctx context.Context, idOrSlug string) (r Team, err erro
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &r)

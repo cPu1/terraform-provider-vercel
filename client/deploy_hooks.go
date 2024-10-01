@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"slices"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -36,7 +37,7 @@ func (c *Client) CreateDeployHook(ctx context.Context, request CreateDeployHookR
 	var r ProjectResponse
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &r)
@@ -74,7 +75,7 @@ func (c *Client) DeleteDeployHook(ctx context.Context, request DeleteDeployHookR
 
 	err := c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 	}, nil)
 	if err != nil {

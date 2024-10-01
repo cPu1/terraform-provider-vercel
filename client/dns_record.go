@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -39,7 +40,7 @@ func (c *Client) CreateDNSRecord(ctx context.Context, teamID string, request Cre
 	}
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   string(mustMarshal(request)),
 	}, &response)
@@ -59,7 +60,7 @@ func (c *Client) DeleteDNSRecord(ctx context.Context, domain, recordID, teamID s
 
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 		body:   "",
 	}, nil)
@@ -88,7 +89,7 @@ func (c *Client) GetDNSRecord(ctx context.Context, recordID, teamID string) (r D
 
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &r)
@@ -111,7 +112,7 @@ func (c *Client) ListDNSRecords(ctx context.Context, domain, teamID string) (r [
 	}{}
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &dr)
@@ -153,7 +154,7 @@ func (c *Client) UpdateDNSRecord(ctx context.Context, teamID, recordID string, r
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "PATCH",
+		method: http.MethodPatch,
 		url:    url,
 		body:   payload,
 	}, &r)

@@ -30,7 +30,7 @@ type APIError struct {
 }
 
 // Error provides a user friendly error message.
-func (e APIError) Error() string {
+func (e *APIError) Error() string {
 	return fmt.Sprintf("%s - %s", e.Code, e.Message)
 }
 
@@ -59,7 +59,7 @@ func (cr *clientRequest) toHTTPRequest() (*http.Request, error) {
 	return r, nil
 }
 
-// doRequest is a helper function for consistently requesting data from vercel.
+// doRequest is a helper function for consistently requesting data from Vercel.
 // This manages:
 // - Setting the default Content-Type for requests with a body
 // - Setting the User-Agent
@@ -67,33 +67,40 @@ func (cr *clientRequest) toHTTPRequest() (*http.Request, error) {
 // - Converting error responses into an inspectable type
 // - Unmarshaling responses
 // - Parsing a Retry-After header in the case of rate limits being hit
-// - In the case of a rate-limit being hit, trying again aftera period of time
+// - In the case of a rate-limit being hit, trying again after a period of time
 func (c *Client) doRequest(req clientRequest, v interface{}) error {
-	r, err := req.toHTTPRequest()
-	if err != nil {
-		return err
+	doRequest := func() error {
+		r, err := req.toHTTPRequest()
+		if err != nil {
+			return err
+		}
+		return c._doRequest(r, v, req.errorOnNoContent)
 	}
-	err = c._doRequest(r, v, req.errorOnNoContent)
+	err := doRequest()
 	for retries := 0; retries < 3; retries++ {
-		var apiErr APIError
+		var apiErr *APIError
 		if errors.As(err, &apiErr) && // we received an api error
-			apiErr.StatusCode == 429 && // and it was a rate limit
+			apiErr.StatusCode == http.StatusTooManyRequests && // and it was a rate limit
 			apiErr.retryAfter > 0 && // and there was a retry time
 			apiErr.retryAfter < 5*60 { // and the retry time is less than 5 minutes
 			tflog.Error(req.ctx, "Rate limit was hit", map[string]interface{}{
 				"error":      apiErr,
 				"retryAfter": apiErr.retryAfter,
 			})
-			time.Sleep(time.Duration(apiErr.retryAfter) * time.Second)
-			r, err = req.toHTTPRequest()
+			timer := time.NewTimer(time.Duration(apiErr.retryAfter) * time.Second)
+			select {
+			case <-req.ctx.Done():
+				timer.Stop()
+				return req.ctx.Err()
+			case <-timer.C:
+			}
+			r, err := req.toHTTPRequest()
 			if err != nil {
 				return err
 			}
-			err = c._doRequest(r, v, req.errorOnNoContent)
-			if err != nil {
-				continue
+			if err = c._doRequest(r, v, req.errorOnNoContent); err == nil {
+				return nil
 			}
-			return nil
 		} else {
 			break
 		}
@@ -116,11 +123,12 @@ func (c *Client) _doRequest(req *http.Request, v interface{}, errorOnNoContent b
 	}
 
 	if resp.StatusCode >= 300 {
-		var errorResponse APIError
 		if string(responseBody) == "" {
-			errorResponse.StatusCode = resp.StatusCode
-			return errorResponse
+			return &APIError{
+				StatusCode: resp.StatusCode,
+			}
 		}
+		var errorResponse APIError
 		err = json.Unmarshal(responseBody, &struct {
 			Error *APIError `json:"error"`
 		}{
@@ -132,7 +140,7 @@ func (c *Client) _doRequest(req *http.Request, v interface{}, errorOnNoContent b
 		errorResponse.StatusCode = resp.StatusCode
 		errorResponse.RawMessage = responseBody
 		errorResponse.retryAfter = 1000 // set a sensible default for retrying. This is in milliseconds.
-		if resp.StatusCode == 429 {
+		if resp.StatusCode == http.StatusTooManyRequests {
 			retryAfterRaw := resp.Header.Get("Retry-After")
 			if retryAfterRaw != "" {
 				retryAfter, err := strconv.Atoi(retryAfterRaw)
@@ -141,16 +149,16 @@ func (c *Client) _doRequest(req *http.Request, v interface{}, errorOnNoContent b
 				}
 			}
 		}
-		return errorResponse
+		return &errorResponse
 	}
 
 	if v == nil {
 		return nil
 	}
 
-	if errorOnNoContent && resp.StatusCode == 204 {
-		return APIError{
-			StatusCode: 204,
+	if errorOnNoContent && resp.StatusCode == http.StatusNoContent {
+		return &APIError{
+			StatusCode: resp.StatusCode,
 			Code:       "no_content",
 			Message:    "No content",
 		}

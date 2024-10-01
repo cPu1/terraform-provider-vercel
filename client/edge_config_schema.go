@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -25,7 +26,7 @@ func (c *Client) UpsertEdgeConfigSchema(ctx context.Context, request EdgeConfigS
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &e)
@@ -50,7 +51,7 @@ func (c *Client) GetEdgeConfigSchema(ctx context.Context, id, teamID string) (e 
 	}, &e)
 
 	if noContent(err) {
-		return e, APIError{
+		return e, &APIError{
 			StatusCode: 404,
 			Message:    "Edge Config Schema not found",
 			Code:       "not_found",
@@ -72,7 +73,7 @@ func (c *Client) DeleteEdgeConfigSchema(ctx context.Context, id, teamID string) 
 	})
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 	}, nil)
 }

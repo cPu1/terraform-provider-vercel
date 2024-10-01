@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -32,7 +33,7 @@ func (c *Client) CreateProjectDomain(ctx context.Context, projectID, teamID stri
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &r)
@@ -52,7 +53,7 @@ func (c *Client) DeleteProjectDomain(ctx context.Context, projectID, domain, tea
 	})
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 		body:   "",
 	}, nil)
@@ -81,7 +82,7 @@ func (c *Client) GetProjectDomain(ctx context.Context, projectID, domain, teamID
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &r)
@@ -110,7 +111,7 @@ func (c *Client) UpdateProjectDomain(ctx context.Context, projectID, domain, tea
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "PATCH",
+		method: http.MethodPatch,
 		url:    url,
 		body:   payload,
 	}, &r)

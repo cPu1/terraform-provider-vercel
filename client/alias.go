@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -20,7 +21,7 @@ type createAliasResponse struct {
 }
 
 // CreateAlias creates an alias within Vercel.
-func (c *Client) CreateAlias(ctx context.Context, request CreateAliasRequest, deploymentID string, teamID string) (r AliasResponse, err error) {
+func (c *Client) CreateAlias(ctx context.Context, request CreateAliasRequest, deploymentID, teamID string) (r AliasResponse, err error) {
 	url := fmt.Sprintf("%s/v2/deployments/%s/aliases", c.baseURL, deploymentID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
@@ -34,7 +35,7 @@ func (c *Client) CreateAlias(ctx context.Context, request CreateAliasRequest, de
 	var aliasResponse createAliasResponse
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &aliasResponse)
@@ -67,7 +68,7 @@ func (c *Client) DeleteAlias(ctx context.Context, aliasUID string, teamID string
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 		body:   "",
 	}, &r)
@@ -93,7 +94,7 @@ func (c *Client) GetAlias(ctx context.Context, alias, teamID string) (r AliasRes
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &r)

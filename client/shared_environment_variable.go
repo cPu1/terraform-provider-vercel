@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -50,7 +51,7 @@ func (c *Client) CreateSharedEnvironmentVariable(ctx context.Context, request Cr
 	}
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &response)
@@ -83,7 +84,7 @@ func (c *Client) DeleteSharedEnvironmentVariable(ctx context.Context, teamID, va
 	})
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 		body:   payload,
 	}, nil)
@@ -100,7 +101,7 @@ func (c *Client) GetSharedEnvironmentVariable(ctx context.Context, teamID, envID
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &e)
@@ -122,7 +123,7 @@ func (c *Client) ListSharedEnvironmentVariables(ctx context.Context, teamID stri
 	}{}
 	err := c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &res)
@@ -163,7 +164,7 @@ func (c *Client) UpdateSharedEnvironmentVariable(ctx context.Context, request Up
 	}
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "PATCH",
+		method: http.MethodPatch,
 		url:    url,
 		body:   payload,
 	}, &response)

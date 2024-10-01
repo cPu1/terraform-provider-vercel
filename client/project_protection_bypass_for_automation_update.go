@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -51,7 +52,7 @@ func (c *Client) UpdateProtectionBypassForAutomation(ctx context.Context, reques
 	}{}
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "PATCH",
+		method: http.MethodPatch,
 		url:    url,
 		body:   payload,
 	}, &response)

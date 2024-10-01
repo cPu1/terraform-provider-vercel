@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"net/http"
 	"strings"
 	"time"
 
@@ -104,11 +105,10 @@ func (dr *DeploymentResponse) DeploymentLogsURL(projectID string) string {
 
 // CheckForError checks through the various failure modes of a deployment to see if any were hit.
 func (dr *DeploymentResponse) CheckForError(projectID string) error {
-	if dr.ReadyState == "CANCELED" {
-		return fmt.Errorf("deployment canceled")
-	}
-
-	if dr.ReadyState == "ERROR" {
+	switch dr.ReadyState {
+	case "CANCELED":
+		return errors.New("deployment canceled")
+	case "ERROR":
 		return fmt.Errorf(
 			"%s - %s. Visit %s for more information",
 			dr.ErrorCode,
@@ -145,7 +145,7 @@ type MissingFilesError struct {
 }
 
 // Error gives the MissingFilesError a user friendly error message.
-func (e MissingFilesError) Error() string {
+func (e *MissingFilesError) Error() string {
 	return fmt.Sprintf("%s - %s", e.Code, e.Message)
 }
 
@@ -207,11 +207,11 @@ func (c *Client) CreateDeployment(ctx context.Context, request CreateDeploymentR
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &r)
-	var apiErr APIError
+	var apiErr *APIError
 	if errors.As(err, &apiErr) && apiErr.Code == "missing_files" {
 		var missingFilesError MissingFilesError
 		err = json.Unmarshal(apiErr.RawMessage, &struct {
@@ -222,7 +222,7 @@ func (c *Client) CreateDeployment(ctx context.Context, request CreateDeploymentR
 		if err != nil {
 			return r, fmt.Errorf("error unmarshaling missing files error: %w", err)
 		}
-		return r, missingFilesError
+		return r, &missingFilesError
 	}
 	if err != nil {
 		return r, err
@@ -235,7 +235,14 @@ func (c *Client) CreateDeployment(ctx context.Context, request CreateDeploymentR
 		if err != nil {
 			return r, err
 		}
-		time.Sleep(5 * time.Second)
+		timer := time.NewTimer(5 * time.Second)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return r, ctx.Err()
+		case <-timer.C:
+
+		}
 		r, err = c.GetDeployment(ctx, r.ID, teamID)
 		if err != nil {
 			return r, fmt.Errorf("error getting deployment: %w", err)
@@ -268,7 +275,7 @@ func (c *Client) DeleteDeployment(ctx context.Context, deploymentID string, team
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 		body:   "",
 	}, &r)
@@ -287,7 +294,7 @@ func (c *Client) GetDeployment(ctx context.Context, deploymentID, teamID string)
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &r)

@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -35,7 +36,7 @@ func (c *Client) CreateWebhook(ctx context.Context, request CreateWebhookRequest
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &w)
@@ -52,7 +53,7 @@ func (c *Client) DeleteWebhook(ctx context.Context, id, teamID string) error {
 	})
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 	}, nil)
 }
@@ -67,7 +68,7 @@ func (c *Client) GetWebhook(ctx context.Context, id, teamID string) (w Webhook, 
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 	}, &w)
 	return w, err

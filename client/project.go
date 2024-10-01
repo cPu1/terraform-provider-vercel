@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -70,7 +71,7 @@ func (c *Client) CreateProject(ctx context.Context, teamID string, request Creat
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &r)
@@ -93,7 +94,7 @@ func (c *Client) DeleteProject(ctx context.Context, projectID, teamID string) er
 	})
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 		body:   "",
 	}, nil)
@@ -226,7 +227,7 @@ func (c *Client) GetProject(ctx context.Context, projectID, teamID string) (r Pr
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &r)
@@ -253,7 +254,7 @@ func (c *Client) ListProjects(ctx context.Context, teamID string) (r []ProjectRe
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &pr)
@@ -312,7 +313,7 @@ func (c *Client) UpdateProject(ctx context.Context, projectID, teamID string, re
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "PATCH",
+		method: http.MethodPatch,
 		url:    url,
 		body:   payload,
 	}, &r)
@@ -342,7 +343,7 @@ func (c *Client) UpdateProductionBranch(ctx context.Context, request UpdateProdu
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "PATCH",
+		method: http.MethodPatch,
 		url:    url,
 		body:   payload,
 	}, &r)
@@ -363,7 +364,7 @@ func (c *Client) UnlinkGitRepoFromProject(ctx context.Context, projectID, teamID
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 	}, &r)
 	if err != nil {
@@ -391,7 +392,7 @@ func (c *Client) LinkGitRepoToProject(ctx context.Context, request LinkGitRepoTo
 	payload := string(mustMarshal(request))
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &r)

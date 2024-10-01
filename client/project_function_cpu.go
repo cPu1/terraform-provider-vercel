@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -46,7 +47,7 @@ func (c *Client) GetProjectFunctionCPU(ctx context.Context, projectID, teamID st
 	var f functionCPU
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 	}, &f)
 	if err != nil {
@@ -77,7 +78,7 @@ func (c *Client) UpdateProjectFunctionCPU(ctx context.Context, request ProjectFu
 	var f functionCPU
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "PATCH",
+		method: http.MethodPatch,
 		url:    url,
 		body:   payload,
 	}, &f)

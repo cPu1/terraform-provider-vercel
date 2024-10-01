@@ -19,7 +19,7 @@ func (c *Client) http() *http.Client {
 		c.client = &http.Client{
 			// Hopefully it doesn't take more than 5 minutes
 			// to upload a single file for a deployment.
-			Timeout: 5 * 60 * time.Second,
+			Timeout: 5 * time.Minute,
 		}
 	}
 

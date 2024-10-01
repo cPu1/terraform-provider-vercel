@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -30,7 +31,7 @@ func (c *Client) CreateEdgeConfig(ctx context.Context, request CreateEdgeConfigR
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &e)
@@ -47,7 +48,7 @@ func (c *Client) GetEdgeConfig(ctx context.Context, id, teamID string) (e EdgeCo
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 	}, &e)
 	return e, err
@@ -72,7 +73,7 @@ func (c *Client) UpdateEdgeConfig(ctx context.Context, request UpdateEdgeConfigR
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "PUT",
+		method: http.MethodPut,
 		url:    url,
 		body:   payload,
 	}, &e)
@@ -90,7 +91,7 @@ func (c *Client) DeleteEdgeConfig(ctx context.Context, id, teamID string) error 
 
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 	}, nil)
 }
@@ -105,7 +106,7 @@ func (c *Client) ListEdgeConfigs(ctx context.Context, teamID string) (e []EdgeCo
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 	}, &e)
 	return e, err

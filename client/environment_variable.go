@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -37,7 +38,7 @@ func (c *Client) CreateEnvironmentVariable(ctx context.Context, request CreateEn
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &e)
@@ -65,7 +66,7 @@ func (c *Client) CreateEnvironmentVariables(ctx context.Context, request CreateE
 	})
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, nil)
@@ -96,7 +97,7 @@ func (c *Client) UpdateEnvironmentVariable(ctx context.Context, request UpdateEn
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "PATCH",
+		method: http.MethodPatch,
 		url:    url,
 		body:   payload,
 	}, &e)
@@ -117,7 +118,7 @@ func (c *Client) DeleteEnvironmentVariable(ctx context.Context, projectID, teamI
 	})
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 		body:   "",
 	}, nil)
@@ -137,7 +138,7 @@ func (c *Client) GetEnvironmentVariables(ctx context.Context, projectID, teamID 
 	})
 	err := c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &envResponse)
@@ -159,7 +160,7 @@ func (c *Client) GetEnvironmentVariable(ctx context.Context, projectID, teamID, 
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &e)

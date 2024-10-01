@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 )
 
 type AttackChallengeMode struct {
@@ -39,7 +40,7 @@ func (c *Client) UpdateAttackChallengeMode(ctx context.Context, request AttackCh
 	}
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &res)

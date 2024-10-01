@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -39,7 +40,7 @@ func (c *Client) DeleteDeploymentRetention(ctx context.Context, projectID, teamI
 	})
 	err := c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "PATCH",
+		method: http.MethodPatch,
 		url:    url,
 		body:   payload,
 	}, nil)
@@ -101,7 +102,7 @@ func (c *Client) UpdateDeploymentRetention(ctx context.Context, request UpdateDe
 	var d deploymentExpirationResponse
 	err := c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "PATCH",
+		method: http.MethodPatch,
 		url:    url,
 		body:   payload,
 	}, &d)
@@ -121,7 +122,7 @@ func (c *Client) GetDeploymentRetention(ctx context.Context, projectID, teamID s
 	var p ProjectResponse
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 		body:   "",
 	}, &p)

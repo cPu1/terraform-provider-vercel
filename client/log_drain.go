@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -44,7 +45,7 @@ func (c *Client) CreateLogDrain(ctx context.Context, request CreateLogDrainReque
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &l)
@@ -61,7 +62,7 @@ func (c *Client) DeleteLogDrain(ctx context.Context, id, teamID string) error {
 	})
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 	}, nil)
 }
@@ -76,7 +77,7 @@ func (c *Client) GetLogDrain(ctx context.Context, id, teamID string) (l LogDrain
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 	}, &l)
 	return l, err
@@ -93,7 +94,7 @@ func (c *Client) GetEndpointVerificationCode(ctx context.Context, teamID string)
 	}
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 	}, &l)
 	return l.Code, err

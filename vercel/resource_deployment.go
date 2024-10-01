@@ -284,10 +284,8 @@ func (p *ProjectSettings) fillNulls() *ProjectSettings {
  */
 func normaliseFilename(filename string, pathPrefix types.String) string {
 	filename = filepath.ToSlash(filename)
-	if pathPrefix.IsUnknown() || pathPrefix.IsNull() {
-		for strings.HasPrefix(filename, "../") {
-			return strings.TrimPrefix(filename, "../")
-		}
+	if (pathPrefix.IsUnknown() || pathPrefix.IsNull()) && strings.HasPrefix(filename, "../") {
+		return strings.TrimPrefix(filename, "../")
 	}
 
 	return strings.TrimPrefix(filename, filepath.ToSlash(pathPrefix.ValueString()))
@@ -451,8 +449,9 @@ func validatePrebuiltBuilds(diags AddErrorer, config Deployment, files []client.
 }
 
 func getPrebuiltBuildsFile(files []client.DeploymentFile) (string, bool) {
+	prefix := filepath.Join(".vercel", "output", "builds.json")
 	for _, f := range files {
-		if strings.HasSuffix(f.File, filepath.Join(".vercel", "output", "builds.json")) {
+		if strings.HasSuffix(f.File, prefix) {
 			return f.File, true
 		}
 	}
@@ -534,7 +533,7 @@ func (r *deploymentResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 
 	out, err := r.client.CreateDeployment(ctx, cdr, plan.TeamID.ValueString())
-	var mfErr client.MissingFilesError
+	var mfErr *client.MissingFilesError
 	if errors.As(err, &mfErr) {
 		// Then we need to upload the files, and create the deployment again.
 		for _, sha := range mfErr.Missing {

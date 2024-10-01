@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
@@ -41,7 +42,7 @@ func (c *Client) CreateEdgeConfigToken(ctx context.Context, request CreateEdgeCo
 	})
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "POST",
+		method: http.MethodPost,
 		url:    url,
 		body:   payload,
 	}, &e)
@@ -76,7 +77,7 @@ func (c *Client) DeleteEdgeConfigToken(ctx context.Context, request EdgeConfigTo
 	})
 	return c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "DELETE",
+		method: http.MethodDelete,
 		url:    url,
 		body:   payload,
 	}, nil)
@@ -94,7 +95,7 @@ func (c *Client) GetEdgeConfigToken(ctx context.Context, request EdgeConfigToken
 
 	err = c.doRequest(clientRequest{
 		ctx:    ctx,
-		method: "GET",
+		method: http.MethodGet,
 		url:    url,
 	}, &e)
 	e.TeamID = request.TeamID
