@@ -17,36 +17,18 @@ var (
 )
 
 func newAttackChallengeModeDataSource() datasource.DataSource {
-	return &attackChallengeModeDataSource{}
+	return &attackChallengeModeDataSource{
+		dataSourceConfigurer: &dataSourceConfigurer{
+			dataSourceNameSuffix: "_attack_challenge_mode",
+		},
+	}
 }
 
 type attackChallengeModeDataSource struct {
-	client *client.Client
+	*dataSourceConfigurer
 }
 
-func (d *attackChallengeModeDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_attack_challenge_mode"
-}
-
-func (d *attackChallengeModeDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	d.client = client
-}
-
-func (r *attackChallengeModeDataSource) Schema(_ context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (r *attackChallengeModeDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: `
 Provides an Attack Challenge Mode resource.

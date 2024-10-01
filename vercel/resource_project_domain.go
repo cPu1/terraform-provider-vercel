@@ -11,6 +11,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/vercel/terraform-provider-vercel/client"
 )
 
@@ -20,37 +21,19 @@ var (
 )
 
 func newProjectDomainResource() resource.Resource {
-	return &projectDomainResource{}
+	return &projectDomainResource{
+		resourceConfigurer: &resourceConfigurer{
+			resourceNameSuffix: "_project_domain",
+		},
+	}
 }
 
 type projectDomainResource struct {
-	client *client.Client
-}
-
-func (r *projectDomainResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_project_domain"
-}
-
-func (r *projectDomainResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	r.client = client
+	*resourceConfigurer
 }
 
 // Schema returns the schema information for a deployment resource.
-func (r *projectDomainResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *projectDomainResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: `
 Provides a Project Domain resource.

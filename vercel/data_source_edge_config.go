@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/vercel/terraform-provider-vercel/client"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -17,33 +16,15 @@ var (
 )
 
 func newEdgeConfigDataSource() datasource.DataSource {
-	return &edgeConfigDataSource{}
+	return &edgeConfigDataSource{
+		dataSourceConfigurer: &dataSourceConfigurer{
+			dataSourceNameSuffix: "_edge_config",
+		},
+	}
 }
 
 type edgeConfigDataSource struct {
-	client *client.Client
-}
-
-func (d *edgeConfigDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_edge_config"
-}
-
-func (d *edgeConfigDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	d.client = client
+	*dataSourceConfigurer
 }
 
 // Schema returns the schema information for an edgeConfig data source

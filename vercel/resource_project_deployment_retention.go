@@ -13,47 +13,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/vercel/terraform-provider-vercel/client"
 )
 
 var (
-	_ resource.Resource                = &projectDeploymentRetentionResource{}
 	_ resource.ResourceWithConfigure   = &projectDeploymentRetentionResource{}
 	_ resource.ResourceWithImportState = &projectDeploymentRetentionResource{}
 )
 
 func newProjectDeploymentRetentionResource() resource.Resource {
-	return &projectDeploymentRetentionResource{}
+	return &projectDeploymentRetentionResource{
+		resourceConfigurer: &resourceConfigurer{
+			resourceNameSuffix: "_project_deployment_retention",
+		},
+	}
 }
 
 type projectDeploymentRetentionResource struct {
-	client *client.Client
-}
-
-func (r *projectDeploymentRetentionResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_project_deployment_retention"
-}
-
-func (r *projectDeploymentRetentionResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	r.client = client
+	*resourceConfigurer
 }
 
 // Schema returns the schema information for a project deployment retention resource.
-func (r *projectDeploymentRetentionResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *projectDeploymentRetentionResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: `
 Provides a Project Deployment Retention resource.

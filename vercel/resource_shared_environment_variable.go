@@ -16,22 +16,26 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/vercel/terraform-provider-vercel/client"
 )
 
 var (
-	_ resource.Resource                = &sharedEnvironmentVariableResource{}
 	_ resource.ResourceWithConfigure   = &sharedEnvironmentVariableResource{}
 	_ resource.ResourceWithImportState = &sharedEnvironmentVariableResource{}
 	_ resource.ResourceWithModifyPlan  = &sharedEnvironmentVariableResource{}
 )
 
 func newSharedEnvironmentVariableResource() resource.Resource {
-	return &sharedEnvironmentVariableResource{}
+	return &sharedEnvironmentVariableResource{
+		resourceConfigurer: &resourceConfigurer{
+			resourceNameSuffix: "_shared_environment_variable",
+		},
+	}
 }
 
 type sharedEnvironmentVariableResource struct {
-	client *client.Client
+	*resourceConfigurer
 }
 
 func (r *sharedEnvironmentVariableResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
@@ -77,30 +81,8 @@ func (r *sharedEnvironmentVariableResource) ModifyPlan(ctx context.Context, req 
 	)
 }
 
-func (r *sharedEnvironmentVariableResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_shared_environment_variable"
-}
-
-func (r *sharedEnvironmentVariableResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	r.client = client
-}
-
 // Schema returns the schema information for a shared environment variable resource.
-func (r *sharedEnvironmentVariableResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *sharedEnvironmentVariableResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: `
 Provides a Shared Environment Variable resource.

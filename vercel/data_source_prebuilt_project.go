@@ -12,7 +12,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/vercel/terraform-provider-vercel/client"
 	"github.com/vercel/terraform-provider-vercel/file"
 )
 
@@ -22,33 +21,15 @@ var (
 )
 
 func newPrebuiltProjectDataSource() datasource.DataSource {
-	return &prebuiltProjectDataSource{}
+	return &prebuiltProjectDataSource{
+		dataSourceConfigurer: &dataSourceConfigurer{
+			dataSourceNameSuffix: "_prebuilt_project",
+		},
+	}
 }
 
 type prebuiltProjectDataSource struct {
-	client *client.Client
-}
-
-func (d *prebuiltProjectDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_prebuilt_project"
-}
-
-func (d *prebuiltProjectDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	d.client = client
+	*dataSourceConfigurer
 }
 
 // Schema returns the schema information for a project directory data source

@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/vercel/terraform-provider-vercel/client"
 )
 
@@ -23,33 +24,15 @@ var (
 )
 
 func newDNSRecordResource() resource.Resource {
-	return &dnsRecordResource{}
+	return &dnsRecordResource{
+		resourceConfigurer: &resourceConfigurer{
+			resourceNameSuffix: "_dns_record",
+		},
+	}
 }
 
 type dnsRecordResource struct {
-	client *client.Client
-}
-
-func (r *dnsRecordResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_dns_record"
-}
-
-func (r *dnsRecordResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	r.client = client
+	*resourceConfigurer
 }
 
 func (r *dnsRecordResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {

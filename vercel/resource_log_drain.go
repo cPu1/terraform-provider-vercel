@@ -15,47 +15,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/vercel/terraform-provider-vercel/client"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                = &logDrainResource{}
 	_ resource.ResourceWithConfigure   = &logDrainResource{}
 	_ resource.ResourceWithImportState = &logDrainResource{}
 )
 
 func newLogDrainResource() resource.Resource {
-	return &logDrainResource{}
+	return &logDrainResource{
+		resourceConfigurer: &resourceConfigurer{
+			resourceNameSuffix: "_log_drain",
+		},
+	}
 }
 
 type logDrainResource struct {
-	client *client.Client
+	*resourceConfigurer
 }
 
-func (r *logDrainResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_log_drain"
-}
-
-func (r *logDrainResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	r.client = client
-}
-
-func (r *logDrainResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *logDrainResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: `
 Provides a Configurable Log Drain resource.

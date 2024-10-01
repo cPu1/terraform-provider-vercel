@@ -14,48 +14,30 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/vercel/terraform-provider-vercel/client"
 )
 
 var (
-	_ resource.Resource                = &projectEnvironmentVariableResource{}
 	_ resource.ResourceWithConfigure   = &projectEnvironmentVariableResource{}
 	_ resource.ResourceWithImportState = &projectEnvironmentVariableResource{}
 	_ resource.ResourceWithModifyPlan  = &projectEnvironmentVariableResource{}
 )
 
 func newProjectEnvironmentVariableResource() resource.Resource {
-	return &projectEnvironmentVariableResource{}
+	return &projectEnvironmentVariableResource{
+		resourceConfigurer: &resourceConfigurer{
+			resourceNameSuffix: "_project_environment_variable",
+		},
+	}
 }
 
 type projectEnvironmentVariableResource struct {
-	client *client.Client
-}
-
-func (r *projectEnvironmentVariableResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_project_environment_variable"
-}
-
-func (r *projectEnvironmentVariableResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	r.client = client
+	*resourceConfigurer
 }
 
 // Schema returns the schema information for a project environment variable resource.
-func (r *projectEnvironmentVariableResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *projectEnvironmentVariableResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: `
 Provides a Project Environment Variable resource.

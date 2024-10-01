@@ -11,48 +11,30 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/vercel/terraform-provider-vercel/client"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                = &projectFunctionCPUResource{}
 	_ resource.ResourceWithConfigure   = &projectFunctionCPUResource{}
 	_ resource.ResourceWithImportState = &projectFunctionCPUResource{}
 )
 
 func newProjectFunctionCPUResource() resource.Resource {
-	return &projectFunctionCPUResource{}
+	return &projectFunctionCPUResource{
+		resourceConfigurer: &resourceConfigurer{
+			resourceNameSuffix: "_project_function_cpu",
+		},
+	}
 }
 
 type projectFunctionCPUResource struct {
-	client *client.Client
-}
-
-func (r *projectFunctionCPUResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_project_function_cpu"
-}
-
-func (r *projectFunctionCPUResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	r.client = client
+	*resourceConfigurer
 }
 
 // Schema returns the schema information for an alias resource.
-func (r *projectFunctionCPUResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *projectFunctionCPUResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		DeprecationMessage: "This resource is deprecated and no longer works. Please use the `vercel_project` resource and its `resource_config` attribute instead.",
 		Description: `

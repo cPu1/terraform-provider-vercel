@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
-	"github.com/vercel/terraform-provider-vercel/client"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -19,15 +18,15 @@ var (
 )
 
 func newSharedEnvironmentVariableDataSource() datasource.DataSource {
-	return &sharedEnvironmentVariableDataSource{}
+	return &sharedEnvironmentVariableDataSource{
+		dataSourceConfigurer: &dataSourceConfigurer{
+			dataSourceNameSuffix: "_shared_environment_variable",
+		},
+	}
 }
 
 type sharedEnvironmentVariableDataSource struct {
-	client *client.Client
-}
-
-func (d *sharedEnvironmentVariableDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_shared_environment_variable"
+	*dataSourceConfigurer
 }
 
 func (d *sharedEnvironmentVariableDataSource) ValidateConfig(ctx context.Context, req datasource.ValidateConfigRequest, resp *datasource.ValidateConfigResponse) {
@@ -63,26 +62,8 @@ func (d *sharedEnvironmentVariableDataSource) ValidateConfig(ctx context.Context
 	}
 }
 
-func (d *sharedEnvironmentVariableDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	d.client = client
-}
-
 // Schema returns the schema information for a shared environment variable data source
-func (d *sharedEnvironmentVariableDataSource) Schema(_ context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (d *sharedEnvironmentVariableDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: `
 Provides information about an existing Shared Environment Variable within Vercel.

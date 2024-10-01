@@ -19,37 +19,19 @@ var (
 )
 
 func newDeploymentDataSource() datasource.DataSource {
-	return &deploymentDataSource{}
+	return &deploymentDataSource{
+		dataSourceConfigurer: &dataSourceConfigurer{
+			dataSourceNameSuffix: "_deployment",
+		},
+	}
 }
 
 type deploymentDataSource struct {
-	client *client.Client
-}
-
-func (d *deploymentDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_deployment"
-}
-
-func (d *deploymentDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	d.client = client
+	*dataSourceConfigurer
 }
 
 // Schema returns the schema information for an deployment data source
-func (r *deploymentDataSource) Schema(_ context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (r *deploymentDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: `
 Provides information about an existing Deployment.

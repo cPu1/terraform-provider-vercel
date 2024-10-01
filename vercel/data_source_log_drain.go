@@ -19,37 +19,19 @@ var (
 )
 
 func newLogDrainDataSource() datasource.DataSource {
-	return &logDrainDataSource{}
+	return &logDrainDataSource{
+		dataSourceConfigurer: &dataSourceConfigurer{
+			dataSourceNameSuffix: "_log_drain",
+		},
+	}
 }
 
 type logDrainDataSource struct {
-	client *client.Client
-}
-
-func (d *logDrainDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_log_drain"
-}
-
-func (d *logDrainDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	d.client = client
+	*dataSourceConfigurer
 }
 
 // Schema returns the schema information for an logDrain data source
-func (r *logDrainDataSource) Schema(_ context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (r *logDrainDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: `
 Provides information about an existing Log Drain.

@@ -12,48 +12,30 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+
 	"github.com/vercel/terraform-provider-vercel/client"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ resource.Resource                = &edgeConfigResource{}
 	_ resource.ResourceWithConfigure   = &edgeConfigResource{}
 	_ resource.ResourceWithImportState = &edgeConfigResource{}
 )
 
 func newEdgeConfigResource() resource.Resource {
-	return &edgeConfigResource{}
+	return &edgeConfigResource{
+		resourceConfigurer: &resourceConfigurer{
+			resourceNameSuffix: "_edge_config",
+		},
+	}
 }
 
 type edgeConfigResource struct {
-	client *client.Client
-}
-
-func (r *edgeConfigResource) Metadata(ctx context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_edge_config"
-}
-
-func (r *edgeConfigResource) Configure(ctx context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Resource Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	r.client = client
+	*resourceConfigurer
 }
 
 // Schema returns the schema information for an edgeConfig resource.
-func (r *edgeConfigResource) Schema(_ context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *edgeConfigResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: `
 Provides an Edge Config resource.

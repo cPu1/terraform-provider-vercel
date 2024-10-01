@@ -12,42 +12,23 @@ import (
 )
 
 var (
-	_ datasource.DataSource              = &projectDeploymentRetentionDataSource{}
 	_ datasource.DataSourceWithConfigure = &projectDeploymentRetentionDataSource{}
 )
 
 func newProjectDeploymentRetentionDataSource() datasource.DataSource {
-	return &projectDeploymentRetentionDataSource{}
+	return &projectDeploymentRetentionDataSource{
+		dataSourceConfigurer: &dataSourceConfigurer{
+			dataSourceNameSuffix: "_project_deployment_retention",
+		},
+	}
 }
 
 type projectDeploymentRetentionDataSource struct {
-	client *client.Client
-}
-
-func (r *projectDeploymentRetentionDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_project_deployment_retention"
-}
-
-func (r *projectDeploymentRetentionDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected DataSource Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	r.client = client
+	*dataSourceConfigurer
 }
 
 // Schema returns the schema information for a project deployment retention datasource.
-func (r *projectDeploymentRetentionDataSource) Schema(_ context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (r *projectDeploymentRetentionDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: `
 Provides a Project Deployment Retention datasource.

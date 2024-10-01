@@ -13,41 +13,22 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ datasource.DataSource              = &projectFunctionCPUDataSource{}
 	_ datasource.DataSourceWithConfigure = &projectFunctionCPUDataSource{}
 )
 
 func newProjectFunctionCPUDataSource() datasource.DataSource {
-	return &projectFunctionCPUDataSource{}
+	return &projectFunctionCPUDataSource{
+		dataSourceConfigurer: &dataSourceConfigurer{
+			dataSourceNameSuffix: "_project_function_cpu",
+		},
+	}
 }
 
 type projectFunctionCPUDataSource struct {
-	client *client.Client
+	*dataSourceConfigurer
 }
 
-func (d *projectFunctionCPUDataSource) Metadata(ctx context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_project_function_cpu"
-}
-
-func (d *projectFunctionCPUDataSource) Configure(ctx context.Context, req datasource.ConfigureRequest, resp *datasource.ConfigureResponse) {
-	// Prevent panic if the provider has not been configured.
-	if req.ProviderData == nil {
-		return
-	}
-
-	client, ok := req.ProviderData.(*client.Client)
-	if !ok {
-		resp.Diagnostics.AddError(
-			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
-		)
-		return
-	}
-
-	d.client = client
-}
-
-func (r *projectFunctionCPUDataSource) Schema(_ context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+func (r *projectFunctionCPUDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		DeprecationMessage: "This data source is deprecated and no longer works. Please use the `vercel_project` data source and its `resource_config` attribute instead.",
 		Description: `
