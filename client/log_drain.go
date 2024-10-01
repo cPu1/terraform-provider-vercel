@@ -53,7 +53,7 @@ func (c *Client) CreateLogDrain(ctx context.Context, request CreateLogDrainReque
 }
 
 func (c *Client) DeleteLogDrain(ctx context.Context, id, teamID string) error {
-	url := fmt.Sprintf("%s/v1/log-drains/%s", c.baseURL, id)
+	url := c.makeURL("/v1/log-drains/%s", id)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -68,7 +68,7 @@ func (c *Client) DeleteLogDrain(ctx context.Context, id, teamID string) error {
 }
 
 func (c *Client) GetLogDrain(ctx context.Context, id, teamID string) (l LogDrain, err error) {
-	url := fmt.Sprintf("%s/v1/log-drains/%s", c.baseURL, id)
+	url := c.makeURL("/v1/log-drains/%s", id)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}

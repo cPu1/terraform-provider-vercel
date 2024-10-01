@@ -22,7 +22,7 @@ type createAliasResponse struct {
 
 // CreateAlias creates an alias within Vercel.
 func (c *Client) CreateAlias(ctx context.Context, request CreateAliasRequest, deploymentID, teamID string) (r AliasResponse, err error) {
-	url := fmt.Sprintf("%s/v2/deployments/%s/aliases", c.baseURL, deploymentID)
+	url := c.makeURL("/v2/deployments/%s/aliases", deploymentID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -58,7 +58,7 @@ type DeleteAliasResponse struct {
 
 // DeleteAlias deletes an alias within Vercel.
 func (c *Client) DeleteAlias(ctx context.Context, aliasUID string, teamID string) (r DeleteAliasResponse, err error) {
-	url := fmt.Sprintf("%s/v2/aliases/%s", c.baseURL, aliasUID)
+	url := c.makeURL("/v2/aliases/%s", aliasUID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -85,7 +85,7 @@ type AliasResponse struct {
 
 // GetAlias retrieves information about an existing alias from vercel.
 func (c *Client) GetAlias(ctx context.Context, alias, teamID string) (r AliasResponse, err error) {
-	url := fmt.Sprintf("%s/v4/aliases/%s", c.baseURL, alias)
+	url := c.makeURL("/v4/aliases/%s", alias)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}

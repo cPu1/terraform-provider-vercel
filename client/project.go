@@ -85,7 +85,7 @@ func (c *Client) CreateProject(ctx context.Context, teamID string, request Creat
 // DeleteProject deletes a project within Vercel. Note that there is no need to explicitly
 // remove every environment variable, as these cease to exist when a project is removed.
 func (c *Client) DeleteProject(ctx context.Context, projectID, teamID string) error {
-	url := fmt.Sprintf("%s/v8/projects/%s", c.baseURL, projectID)
+	url := c.makeURL("/v8/projects/%s", projectID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -218,7 +218,7 @@ type ResourceConfig struct {
 
 // GetProject retrieves information about an existing project from Vercel.
 func (c *Client) GetProject(ctx context.Context, projectID, teamID string) (r ProjectResponse, err error) {
-	url := fmt.Sprintf("%s/v10/projects/%s", c.baseURL, projectID)
+	url := c.makeURL("/v10/projects/%s", projectID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -302,7 +302,7 @@ type UpdateProjectRequest struct {
 
 // UpdateProject updates an existing projects configuration within Vercel.
 func (c *Client) UpdateProject(ctx context.Context, projectID, teamID string, request UpdateProjectRequest) (r ProjectResponse, err error) {
-	url := fmt.Sprintf("%s/v9/projects/%s", c.baseURL, projectID)
+	url := c.makeURL("/v9/projects/%s", projectID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -332,7 +332,7 @@ type UpdateProductionBranchRequest struct {
 }
 
 func (c *Client) UpdateProductionBranch(ctx context.Context, request UpdateProductionBranchRequest) (r ProjectResponse, err error) {
-	url := fmt.Sprintf("%s/v9/projects/%s/branch", c.baseURL, request.ProjectID)
+	url := c.makeURL("/v9/projects/%s/branch", request.ProjectID)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}
@@ -355,7 +355,7 @@ func (c *Client) UpdateProductionBranch(ctx context.Context, request UpdateProdu
 }
 
 func (c *Client) UnlinkGitRepoFromProject(ctx context.Context, projectID, teamID string) (r ProjectResponse, err error) {
-	url := fmt.Sprintf("%s/v9/projects/%s/link", c.baseURL, projectID)
+	url := c.makeURL("/v9/projects/%s/link", projectID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -382,7 +382,7 @@ type LinkGitRepoToProjectRequest struct {
 }
 
 func (c *Client) LinkGitRepoToProject(ctx context.Context, request LinkGitRepoToProjectRequest) (r ProjectResponse, err error) {
-	url := fmt.Sprintf("%s/v9/projects/%s/link", c.baseURL, request.ProjectID)
+	url := c.makeURL("/v9/projects/%s/link", request.ProjectID)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}

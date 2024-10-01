@@ -2,7 +2,9 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/http"
+	"net/url"
 	"time"
 )
 
@@ -54,4 +56,12 @@ func (c *Client) teamID(teamID string) string {
 		return teamID
 	}
 	return c.team.ID
+}
+
+func (c *Client) makeURL(urlPathSpecifier string, urlPathValues ...string) string {
+	var escaped []interface{}
+	for _, val := range urlPathValues {
+		escaped = append(escaped, url.PathEscape(val))
+	}
+	return fmt.Sprintf(fmt.Sprintf("%s%s", c.baseURL, urlPathSpecifier), escaped...)
 }

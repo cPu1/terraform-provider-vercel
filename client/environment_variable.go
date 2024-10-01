@@ -26,7 +26,7 @@ type CreateEnvironmentVariableRequest struct {
 
 // CreateEnvironmentVariable will create a brand new environment variable if one does not exist.
 func (c *Client) CreateEnvironmentVariable(ctx context.Context, request CreateEnvironmentVariableRequest) (e EnvironmentVariable, err error) {
-	url := fmt.Sprintf("%s/v9/projects/%s/env", c.baseURL, request.ProjectID)
+	url := c.makeURL("/v9/projects/%s/env", request.ProjectID)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}
@@ -55,7 +55,7 @@ type CreateEnvironmentVariablesRequest struct {
 }
 
 func (c *Client) CreateEnvironmentVariables(ctx context.Context, request CreateEnvironmentVariablesRequest) error {
-	url := fmt.Sprintf("%s/v10/projects/%s/env", c.baseURL, request.ProjectID)
+	url := c.makeURL("/v10/projects/%s/env", request.ProjectID)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}
@@ -86,7 +86,7 @@ type UpdateEnvironmentVariableRequest struct {
 
 // UpdateEnvironmentVariable will update an existing environment variable to the latest information.
 func (c *Client) UpdateEnvironmentVariable(ctx context.Context, request UpdateEnvironmentVariableRequest) (e EnvironmentVariable, err error) {
-	url := fmt.Sprintf("%s/v9/projects/%s/env/%s", c.baseURL, request.ProjectID, request.EnvID)
+	url := c.makeURL("/v9/projects/%s/env/%s", request.ProjectID, request.EnvID)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}
@@ -109,7 +109,7 @@ func (c *Client) UpdateEnvironmentVariable(ctx context.Context, request UpdateEn
 
 // DeleteEnvironmentVariable will remove an environment variable from Vercel.
 func (c *Client) DeleteEnvironmentVariable(ctx context.Context, projectID, teamID, variableID string) error {
-	url := fmt.Sprintf("%s/v8/projects/%s/env/%s", c.baseURL, projectID, variableID)
+	url := c.makeURL("/v8/projects/%s/env/%s", projectID, variableID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -125,7 +125,7 @@ func (c *Client) DeleteEnvironmentVariable(ctx context.Context, projectID, teamI
 }
 
 func (c *Client) GetEnvironmentVariables(ctx context.Context, projectID, teamID string) ([]EnvironmentVariable, error) {
-	url := fmt.Sprintf("%s/v8/projects/%s/env?decrypt=true", c.baseURL, projectID)
+	url := c.makeURL("/v8/projects/%s/env?decrypt=true", projectID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s&teamId=%s", url, c.teamID(teamID))
 	}
@@ -150,7 +150,7 @@ func (c *Client) GetEnvironmentVariables(ctx context.Context, projectID, teamID 
 
 // GetEnvironmentVariable gets a singluar environment variable from Vercel based on its ID.
 func (c *Client) GetEnvironmentVariable(ctx context.Context, projectID, teamID, envID string) (e EnvironmentVariable, err error) {
-	url := fmt.Sprintf("%s/v1/projects/%s/env/%s", c.baseURL, projectID, envID)
+	url := c.makeURL("/v1/projects/%s/env/%s", projectID, envID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}

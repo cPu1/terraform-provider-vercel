@@ -39,7 +39,7 @@ func (c *Client) CreateEdgeConfig(ctx context.Context, request CreateEdgeConfigR
 }
 
 func (c *Client) GetEdgeConfig(ctx context.Context, id, teamID string) (e EdgeConfig, err error) {
-	url := fmt.Sprintf("%s/v1/edge-config/%s", c.baseURL, id)
+	url := c.makeURL("/v1/edge-config/%s", id)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -61,7 +61,7 @@ type UpdateEdgeConfigRequest struct {
 }
 
 func (c *Client) UpdateEdgeConfig(ctx context.Context, request UpdateEdgeConfigRequest) (e EdgeConfig, err error) {
-	url := fmt.Sprintf("%s/v1/edge-config/%s", c.baseURL, request.ID)
+	url := c.makeURL("/v1/edge-config/%s", request.ID)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}
@@ -81,7 +81,7 @@ func (c *Client) UpdateEdgeConfig(ctx context.Context, request UpdateEdgeConfigR
 }
 
 func (c *Client) DeleteEdgeConfig(ctx context.Context, id, teamID string) error {
-	url := fmt.Sprintf("%s/v1/edge-config/%s", c.baseURL, id)
+	url := c.makeURL("/v1/edge-config/%s", id)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}

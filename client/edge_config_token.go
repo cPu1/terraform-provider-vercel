@@ -31,7 +31,7 @@ type CreateEdgeConfigTokenRequest struct {
 }
 
 func (c *Client) CreateEdgeConfigToken(ctx context.Context, request CreateEdgeConfigTokenRequest) (e EdgeConfigToken, err error) {
-	url := fmt.Sprintf("%s/v1/edge-config/%s/token", c.baseURL, request.EdgeConfigID)
+	url := c.makeURL("/v1/edge-config/%s/token", request.EdgeConfigID)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}
@@ -59,7 +59,7 @@ type EdgeConfigTokenRequest struct {
 }
 
 func (c *Client) DeleteEdgeConfigToken(ctx context.Context, request EdgeConfigTokenRequest) error {
-	url := fmt.Sprintf("%s/v1/edge-config/%s/tokens", c.baseURL, request.EdgeConfigID)
+	url := c.makeURL("/v1/edge-config/%s/tokens", request.EdgeConfigID)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}
@@ -84,7 +84,7 @@ func (c *Client) DeleteEdgeConfigToken(ctx context.Context, request EdgeConfigTo
 }
 
 func (c *Client) GetEdgeConfigToken(ctx context.Context, request EdgeConfigTokenRequest) (e EdgeConfigToken, err error) {
-	url := fmt.Sprintf("%s/v1/edge-config/%s/token/%s", c.baseURL, request.EdgeConfigID, request.Token)
+	url := c.makeURL("/v1/edge-config/%s/token/%s", request.EdgeConfigID, request.Token)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}

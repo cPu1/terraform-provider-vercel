@@ -91,7 +91,7 @@ func (c *Client) DeleteSharedEnvironmentVariable(ctx context.Context, teamID, va
 }
 
 func (c *Client) GetSharedEnvironmentVariable(ctx context.Context, teamID, envID string) (e SharedEnvironmentVariableResponse, err error) {
-	url := fmt.Sprintf("%s/v1/env/%s", c.baseURL, envID)
+	url := c.makeURL("/v1/env/%s", envID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}

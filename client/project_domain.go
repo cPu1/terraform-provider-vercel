@@ -21,7 +21,7 @@ type CreateProjectDomainRequest struct {
 
 // CreateProjectDomain creates a project domain within Vercel.
 func (c *Client) CreateProjectDomain(ctx context.Context, projectID, teamID string, request CreateProjectDomainRequest) (r ProjectDomainResponse, err error) {
-	url := fmt.Sprintf("%s/v10/projects/%s/domains", c.baseURL, projectID)
+	url := c.makeURL("/v10/projects/%s/domains", projectID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -43,7 +43,7 @@ func (c *Client) CreateProjectDomain(ctx context.Context, projectID, teamID stri
 
 // DeleteProjectDomain removes any association of a domain name with a Vercel project.
 func (c *Client) DeleteProjectDomain(ctx context.Context, projectID, domain, teamID string) error {
-	url := fmt.Sprintf("%s/v8/projects/%s/domains/%s", c.baseURL, projectID, domain)
+	url := c.makeURL("/v8/projects/%s/domains/%s", projectID, domain)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -72,7 +72,7 @@ type ProjectDomainResponse struct {
 
 // GetProjectDomain retrieves information about a project domain from Vercel.
 func (c *Client) GetProjectDomain(ctx context.Context, projectID, domain, teamID string) (r ProjectDomainResponse, err error) {
-	url := fmt.Sprintf("%s/v8/projects/%s/domains/%s", c.baseURL, projectID, domain)
+	url := c.makeURL("/v8/projects/%s/domains/%s", projectID, domain)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -99,7 +99,7 @@ type UpdateProjectDomainRequest struct {
 
 // UpdateProjectDomain updates an existing project domain within Vercel.
 func (c *Client) UpdateProjectDomain(ctx context.Context, projectID, domain, teamID string, request UpdateProjectDomainRequest) (r ProjectDomainResponse, err error) {
-	url := fmt.Sprintf("%s/v8/projects/%s/domains/%s", c.baseURL, projectID, domain)
+	url := c.makeURL("/v8/projects/%s/domains/%s", projectID, domain)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}

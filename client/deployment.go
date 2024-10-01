@@ -265,7 +265,7 @@ type DeleteDeploymentResponse struct {
 
 // DeleteDeployment deletes a deployment within Vercel.
 func (c *Client) DeleteDeployment(ctx context.Context, deploymentID string, teamID string) (r DeleteDeploymentResponse, err error) {
-	url := fmt.Sprintf("%s/v13/deployments/%s", c.baseURL, deploymentID)
+	url := c.makeURL("/v13/deployments/%s", deploymentID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -284,7 +284,7 @@ func (c *Client) DeleteDeployment(ctx context.Context, deploymentID string, team
 
 // GetDeployment retrieves information from Vercel about an existing Deployment.
 func (c *Client) GetDeployment(ctx context.Context, deploymentID, teamID string) (r DeploymentResponse, err error) {
-	url := fmt.Sprintf("%s/v13/deployments/%s", c.baseURL, deploymentID)
+	url := c.makeURL("/v13/deployments/%s", deploymentID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}

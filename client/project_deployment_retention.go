@@ -27,7 +27,7 @@ type UpdateDeploymentRetentionRequest struct {
 
 // DeleteDeploymentRetention will remove any existing deployment retention for a given project.
 func (c *Client) DeleteDeploymentRetention(ctx context.Context, projectID, teamID string) error {
-	url := fmt.Sprintf("%s/v9/projects/%s/deployment-expiration", c.baseURL, projectID)
+	url := c.makeURL("/v9/projects/%s/deployment-expiration", projectID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -89,7 +89,7 @@ func (d deploymentExpirationResponse) toDeploymentExpiration() DeploymentExpirat
 
 // UpdateDeploymentRetention will update an existing deployment retention to the latest information.
 func (c *Client) UpdateDeploymentRetention(ctx context.Context, request UpdateDeploymentRetentionRequest) (DeploymentExpiration, error) {
-	url := fmt.Sprintf("%s/v9/projects/%s/deployment-expiration", c.baseURL, request.ProjectID)
+	url := c.makeURL("/v9/projects/%s/deployment-expiration", request.ProjectID)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}
@@ -111,7 +111,7 @@ func (c *Client) UpdateDeploymentRetention(ctx context.Context, request UpdateDe
 
 // GetDeploymentRetention returns the deployment retention for a given project.
 func (c *Client) GetDeploymentRetention(ctx context.Context, projectID, teamID string) (d DeploymentExpiration, err error) {
-	url := fmt.Sprintf("%s/v2/projects/%s", c.baseURL, projectID)
+	url := c.makeURL("/v2/projects/%s", projectID)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}

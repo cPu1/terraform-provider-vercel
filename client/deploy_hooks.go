@@ -24,7 +24,7 @@ type CreateDeployHookRequest struct {
 }
 
 func (c *Client) CreateDeployHook(ctx context.Context, request CreateDeployHookRequest) (h DeployHook, err error) {
-	url := fmt.Sprintf("%s/v2/projects/%s/deploy-hooks", c.baseURL, request.ProjectID)
+	url := c.makeURL("/v2/projects/%s/deploy-hooks", request.ProjectID)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}
@@ -63,7 +63,7 @@ type DeleteDeployHookRequest struct {
 }
 
 func (c *Client) DeleteDeployHook(ctx context.Context, request DeleteDeployHookRequest) error {
-	url := fmt.Sprintf("%s/v2/projects/%s/deploy-hooks/%s", c.baseURL, request.ProjectID, request.ID)
+	url := c.makeURL("/v2/projects/%s/deploy-hooks/%s", request.ProjectID, request.ID)
 	if c.teamID(request.TeamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(request.TeamID))
 	}

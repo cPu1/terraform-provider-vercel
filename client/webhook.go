@@ -44,7 +44,7 @@ func (c *Client) CreateWebhook(ctx context.Context, request CreateWebhookRequest
 }
 
 func (c *Client) DeleteWebhook(ctx context.Context, id, teamID string) error {
-	url := fmt.Sprintf("%s/v1/webhooks/%s", c.baseURL, id)
+	url := c.makeURL("/v1/webhooks/%s", id)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
@@ -59,7 +59,7 @@ func (c *Client) DeleteWebhook(ctx context.Context, id, teamID string) error {
 }
 
 func (c *Client) GetWebhook(ctx context.Context, id, teamID string) (w Webhook, err error) {
-	url := fmt.Sprintf("%s/v1/webhooks/%s", c.baseURL, id)
+	url := c.makeURL("/v1/webhooks/%s", id)
 	if c.teamID(teamID) != "" {
 		url = fmt.Sprintf("%s?teamId=%s", url, c.teamID(teamID))
 	}
