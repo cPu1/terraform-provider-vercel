@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"slices"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -992,7 +993,7 @@ func hasSameTarget(p EnvironmentItem, target []string) bool {
 	}
 	for _, t := range p.Target {
 		v := t.ValueString()
-		if !contains(target, v) {
+		if !slices.Contains(target, v) {
 			return false
 		}
 	}

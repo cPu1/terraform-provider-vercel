@@ -3,6 +3,7 @@ package vercel
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -121,7 +122,7 @@ func isSameTarget(a []string, b []types.String) bool {
 		return false
 	}
 	for _, v := range b {
-		if !contains(a, v.ValueString()) {
+		if !slices.Contains(a, v.ValueString()) {
 			return false
 		}
 	}
