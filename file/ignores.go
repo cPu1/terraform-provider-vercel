@@ -2,12 +2,14 @@ package file
 
 import (
 	"bufio"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
+
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 )
 
 var defaultIgnores = []string{
@@ -45,7 +47,7 @@ var defaultIgnores = []string{
 // combine the expected results with a default set of ignored files.
 func GetIgnores(path string) ([]string, error) {
 	ignoreFilePath := filepath.Join(path, ".vercelignore")
-	ignoreFile, err := os.ReadFile(ignoreFilePath)
+	ignoreFile, err := os.Open(ignoreFilePath)
 	if errors.Is(err, fs.ErrNotExist) {
 		return defaultIgnores, nil
 	}
@@ -53,8 +55,16 @@ func GetIgnores(path string) ([]string, error) {
 		return nil, fmt.Errorf("unable to read .vercelignore file: %w", err)
 	}
 
+	defer func() {
+		if err := ignoreFile.Close(); err != nil {
+			tflog.Warn(context.Background(), "error closing file", map[string]interface{}{
+				"error":    err,
+				"filename": ignoreFilePath,
+			})
+		}
+	}()
 	var ignores []string
-	sc := bufio.NewScanner(strings.NewReader(string(ignoreFile)))
+	sc := bufio.NewScanner(ignoreFile)
 	for sc.Scan() {
 		ignores = append(ignores, sc.Text())
 	}
