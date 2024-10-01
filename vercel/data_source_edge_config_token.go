@@ -12,7 +12,6 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ datasource.DataSource              = &edgeConfigTokenDataSource{}
 	_ datasource.DataSourceWithConfigure = &edgeConfigTokenDataSource{}
 )
 
@@ -21,11 +20,42 @@ func newEdgeConfigTokenDataSource() datasource.DataSource {
 		dataSourceConfigurer: &dataSourceConfigurer{
 			dataSourceNameSuffix: "_edge_config_token",
 		},
+		reader: &reader[EdgeConfigToken]{
+			// readFunc will read the edgeConfigToken information by requesting it from the Vercel API, and will update terraform
+			// with this information.
+			// It is called by the provider whenever data source values should be read to update state.
+			readFunc: func(ctx context.Context, config EdgeConfigToken, c *client.Client, resp *datasource.ReadResponse) (EdgeConfigToken, error) {
+				out, err := c.GetEdgeConfigToken(ctx, client.EdgeConfigTokenRequest{
+					Token:        config.Token.ValueString(),
+					TeamID:       config.TeamID.ValueString(),
+					EdgeConfigID: config.EdgeConfigID.ValueString(),
+				})
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error reading EdgeConfig Token",
+						fmt.Sprintf("Could not get Edge Config Token %s %s, unexpected error: %s",
+							config.TeamID.ValueString(),
+							config.ID.ValueString(),
+							err,
+						),
+					)
+					return EdgeConfigToken{}, err
+				}
+
+				result := responseToEdgeConfigToken(out)
+				tflog.Info(ctx, "read edge config token", map[string]interface{}{
+					"team_id":        result.TeamID.ValueString(),
+					"edge_config_id": result.ID.ValueString(),
+				})
+				return result, nil
+			},
+		},
 	}
 }
 
 type edgeConfigTokenDataSource struct {
 	*dataSourceConfigurer
+	*reader[EdgeConfigToken]
 }
 
 // Schema returns the schema information for an edgeConfigToken data source
@@ -64,46 +94,5 @@ An Edge Config token is used to authenticate against an Edge Config's endpoint.
 				Computed:    true,
 			},
 		},
-	}
-}
-
-// Read will read the edgeConfigToken information by requesting it from the Vercel API, and will update terraform
-// with this information.
-// It is called by the provider whenever data source values should be read to update state.
-func (d *edgeConfigTokenDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var config EdgeConfigToken
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	out, err := d.client.GetEdgeConfigToken(ctx, client.EdgeConfigTokenRequest{
-		Token:        config.Token.ValueString(),
-		TeamID:       config.TeamID.ValueString(),
-		EdgeConfigID: config.EdgeConfigID.ValueString(),
-	})
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading EdgeConfig Token",
-			fmt.Sprintf("Could not get Edge Config Token %s %s, unexpected error: %s",
-				config.TeamID.ValueString(),
-				config.ID.ValueString(),
-				err,
-			),
-		)
-		return
-	}
-
-	result := responseToEdgeConfigToken(out)
-	tflog.Info(ctx, "read edge config token", map[string]interface{}{
-		"team_id":        result.TeamID.ValueString(),
-		"edge_config_id": result.ID.ValueString(),
-	})
-
-	diags = resp.State.Set(ctx, result)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
 	}
 }

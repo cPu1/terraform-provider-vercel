@@ -21,11 +21,39 @@ func newAttackChallengeModeDataSource() datasource.DataSource {
 		dataSourceConfigurer: &dataSourceConfigurer{
 			dataSourceNameSuffix: "_attack_challenge_mode",
 		},
+		reader: &reader[AttackChallengeMode]{
+			readFunc: func(ctx context.Context, config AttackChallengeMode, c *client.Client, resp *datasource.ReadResponse) (AttackChallengeMode, error) {
+				out, err := c.GetAttackChallengeMode(ctx, config.ProjectID.ValueString(), config.TeamID.ValueString())
+				if client.NotFound(err) {
+					resp.State.RemoveResource(ctx)
+					return AttackChallengeMode{}, err
+				}
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error reading Attack Challenge Mode",
+						fmt.Sprintf("Could not get Attack Challenge Mode %s %s, unexpected error: %s",
+							config.TeamID.ValueString(),
+							config.ProjectID.ValueString(),
+							err,
+						),
+					)
+					return AttackChallengeMode{}, err
+				}
+
+				result := responseToAttackChallengeMode(out)
+				tflog.Info(ctx, "read attack challenge mode", map[string]interface{}{
+					"team_id":    result.TeamID.ValueString(),
+					"project_id": result.ProjectID.ValueString(),
+				})
+				return result, nil
+			},
+		},
 	}
 }
 
 type attackChallengeModeDataSource struct {
 	*dataSourceConfigurer
+	*reader[AttackChallengeMode]
 }
 
 func (r *attackChallengeModeDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -53,43 +81,5 @@ Attack Challenge Mode prevent malicious traffic by showing a verification challe
 				Description: "Whether Attack Challenge Mode is enabled or not.",
 			},
 		},
-	}
-}
-
-func (d *attackChallengeModeDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var config AttackChallengeMode
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	out, err := d.client.GetAttackChallengeMode(ctx, config.ProjectID.ValueString(), config.TeamID.ValueString())
-	if client.NotFound(err) {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading Attack Challenge Mode",
-			fmt.Sprintf("Could not get Attack Challenge Mode %s %s, unexpected error: %s",
-				config.TeamID.ValueString(),
-				config.ProjectID.ValueString(),
-				err,
-			),
-		)
-		return
-	}
-
-	result := responseToAttackChallengeMode(out)
-	tflog.Info(ctx, "read attack challenge mode", map[string]interface{}{
-		"team_id":    result.TeamID.ValueString(),
-		"project_id": result.ProjectID.ValueString(),
-	})
-
-	diags = resp.State.Set(ctx, result)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
 	}
 }

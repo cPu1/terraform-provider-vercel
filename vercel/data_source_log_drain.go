@@ -2,6 +2,7 @@ package vercel
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -23,11 +24,47 @@ func newLogDrainDataSource() datasource.DataSource {
 		dataSourceConfigurer: &dataSourceConfigurer{
 			dataSourceNameSuffix: "_log_drain",
 		},
+		reader: &reader[LogDrainWithoutSecret]{
+			// readFunc will read the logDrain information by requesting it from the Vercel API, and will update terraform
+			// with this information.
+			// It is called by the provider whenever data source values should be read to update state.
+			readFunc: func(ctx context.Context, config LogDrainWithoutSecret, c *client.Client, resp *datasource.ReadResponse) (LogDrainWithoutSecret, error) {
+				out, err := c.GetLogDrain(ctx, config.ID.ValueString(), config.TeamID.ValueString())
+				if client.NotFound(err) {
+					resp.State.RemoveResource(ctx)
+					return LogDrainWithoutSecret{}, err
+				}
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error reading Log Drain",
+						fmt.Sprintf("Could not get Log Drain %s %s, unexpected error: %s",
+							config.TeamID.ValueString(),
+							config.ID.ValueString(),
+							err,
+						),
+					)
+					return LogDrainWithoutSecret{}, err
+				}
+
+				result, diags := responseToLogDrainWithoutSecret(ctx, out)
+				resp.Diagnostics.Append(diags...)
+				if resp.Diagnostics.HasError() {
+					// TODO.
+					return LogDrainWithoutSecret{}, errors.New("diagnostics error")
+				}
+				tflog.Info(ctx, "read log drain", map[string]interface{}{
+					"team_id":      result.TeamID.ValueString(),
+					"log_drain_id": result.ID.ValueString(),
+				})
+				return result, nil
+			},
+		},
 	}
 }
 
 type logDrainDataSource struct {
 	*dataSourceConfigurer
+	*reader[LogDrainWithoutSecret]
 }
 
 // Schema returns the schema information for an logDrain data source
@@ -130,49 +167,4 @@ func responseToLogDrainWithoutSecret(ctx context.Context, out client.LogDrain) (
 		Sources:        sources,
 		ProjectIDs:     projectIDs,
 	}, nil
-}
-
-// Read will read the logDrain information by requesting it from the Vercel API, and will update terraform
-// with this information.
-// It is called by the provider whenever data source values should be read to update state.
-func (d *logDrainDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var config LogDrainWithoutSecret
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	out, err := d.client.GetLogDrain(ctx, config.ID.ValueString(), config.TeamID.ValueString())
-	if client.NotFound(err) {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading Log Drain",
-			fmt.Sprintf("Could not get Log Drain %s %s, unexpected error: %s",
-				config.TeamID.ValueString(),
-				config.ID.ValueString(),
-				err,
-			),
-		)
-		return
-	}
-
-	result, diags := responseToLogDrainWithoutSecret(ctx, out)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	tflog.Info(ctx, "read log drain", map[string]interface{}{
-		"team_id":      result.TeamID.ValueString(),
-		"log_drain_id": result.ID.ValueString(),
-	})
-
-	diags = resp.State.Set(ctx, result)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 }

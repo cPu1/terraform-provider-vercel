@@ -7,11 +7,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/vercel/terraform-provider-vercel/client"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ datasource.DataSource              = &edgeConfigDataSource{}
 	_ datasource.DataSourceWithConfigure = &edgeConfigDataSource{}
 )
 
@@ -20,11 +20,38 @@ func newEdgeConfigDataSource() datasource.DataSource {
 		dataSourceConfigurer: &dataSourceConfigurer{
 			dataSourceNameSuffix: "_edge_config",
 		},
+		reader: &reader[EdgeConfig]{
+			// readFunc will read the edgeConfig information by requesting it from the Vercel API, and will update terraform
+			// with this information.
+			// It is called by the provider whenever data source values should be read to update state.
+			readFunc: func(ctx context.Context, config EdgeConfig, c *client.Client, resp *datasource.ReadResponse) (EdgeConfig, error) {
+				out, err := c.GetEdgeConfig(ctx, config.ID.ValueString(), config.TeamID.ValueString())
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error reading EdgeConfig",
+						fmt.Sprintf("Could not get Edge Config %s %s, unexpected error: %s",
+							config.TeamID.ValueString(),
+							config.ID.ValueString(),
+							err,
+						),
+					)
+					return EdgeConfig{}, nil
+				}
+
+				result := responseToEdgeConfig(out)
+				tflog.Info(ctx, "read edge config", map[string]interface{}{
+					"team_id":        result.TeamID.ValueString(),
+					"edge_config_id": result.ID.ValueString(),
+				})
+				return result, nil
+			},
+		},
 	}
 }
 
 type edgeConfigDataSource struct {
 	*dataSourceConfigurer
+	*reader[EdgeConfig]
 }
 
 // Schema returns the schema information for an edgeConfig data source
@@ -49,42 +76,5 @@ An Edge Config is a global data store that enables experimentation with feature 
 				Description: "The name/slug of the Edge Config.",
 			},
 		},
-	}
-}
-
-// Read will read the edgeConfig information by requesting it from the Vercel API, and will update terraform
-// with this information.
-// It is called by the provider whenever data source values should be read to update state.
-func (d *edgeConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var config EdgeConfig
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	out, err := d.client.GetEdgeConfig(ctx, config.ID.ValueString(), config.TeamID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading EdgeConfig",
-			fmt.Sprintf("Could not get Edge Config %s %s, unexpected error: %s",
-				config.TeamID.ValueString(),
-				config.ID.ValueString(),
-				err,
-			),
-		)
-		return
-	}
-
-	result := responseToEdgeConfig(out)
-	tflog.Info(ctx, "read edge config", map[string]interface{}{
-		"team_id":        result.TeamID.ValueString(),
-		"edge_config_id": result.ID.ValueString(),
-	})
-
-	diags = resp.State.Set(ctx, result)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
 	}
 }

@@ -14,7 +14,6 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ datasource.DataSource              = &deploymentDataSource{}
 	_ datasource.DataSourceWithConfigure = &deploymentDataSource{}
 )
 
@@ -23,11 +22,42 @@ func newDeploymentDataSource() datasource.DataSource {
 		dataSourceConfigurer: &dataSourceConfigurer{
 			dataSourceNameSuffix: "_deployment",
 		},
+		reader: &reader[DeploymentDataSource]{
+			// readFunc will read the deployment information by requesting it from the Vercel API, and will update terraform
+			// with this information.
+			// It is called by the provider whenever data source values should be read to update state.
+			readFunc: func(ctx context.Context, config DeploymentDataSource, c *client.Client, resp *datasource.ReadResponse) (DeploymentDataSource, error) {
+				out, err := c.GetDeployment(ctx, config.ID.ValueString(), config.TeamID.ValueString())
+				if client.NotFound(err) {
+					resp.State.RemoveResource(ctx)
+					return DeploymentDataSource{}, err
+				}
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error reading deployment",
+						fmt.Sprintf("Could not get deployment %s %s, unexpected error: %s",
+							config.TeamID.ValueString(),
+							config.ID.ValueString(),
+							err,
+						),
+					)
+					return DeploymentDataSource{}, err
+				}
+
+				result := convertResponseToDeploymentDataSource(out)
+				tflog.Info(ctx, "read deployment", map[string]interface{}{
+					"team_id":    result.TeamID.ValueString(),
+					"project_id": result.ID.ValueString(),
+				})
+				return result, nil
+			},
+		},
 	}
 }
 
 type deploymentDataSource struct {
 	*dataSourceConfigurer
+	*reader[DeploymentDataSource]
 }
 
 // Schema returns the schema information for an deployment data source
@@ -101,46 +131,5 @@ func convertResponseToDeploymentDataSource(in client.DeploymentResponse) Deploym
 		ID:         types.StringValue(in.ID),
 		URL:        types.StringValue(in.URL),
 		Ref:        ref,
-	}
-}
-
-// Read will read the deployment information by requesting it from the Vercel API, and will update terraform
-// with this information.
-// It is called by the provider whenever data source values should be read to update state.
-func (d *deploymentDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var config DeploymentDataSource
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	out, err := d.client.GetDeployment(ctx, config.ID.ValueString(), config.TeamID.ValueString())
-	if client.NotFound(err) {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading deployment",
-			fmt.Sprintf("Could not get deployment %s %s, unexpected error: %s",
-				config.TeamID.ValueString(),
-				config.ID.ValueString(),
-				err,
-			),
-		)
-		return
-	}
-
-	result := convertResponseToDeploymentDataSource(out)
-	tflog.Info(ctx, "read deployment", map[string]interface{}{
-		"team_id":    result.TeamID.ValueString(),
-		"project_id": result.ID.ValueString(),
-	})
-
-	diags = resp.State.Set(ctx, result)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
 	}
 }

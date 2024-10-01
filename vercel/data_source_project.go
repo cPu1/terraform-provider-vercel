@@ -16,7 +16,6 @@ import (
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ datasource.DataSource              = &projectDataSource{}
 	_ datasource.DataSourceWithConfigure = &projectDataSource{}
 )
 
@@ -25,11 +24,53 @@ func newProjectDataSource() datasource.DataSource {
 		dataSourceConfigurer: &dataSourceConfigurer{
 			dataSourceNameSuffix: "_project",
 		},
+		reader: &reader[ProjectDataSource]{
+			// readFunc will read project information by requesting it from the Vercel API, and will update terraform
+			// with this information.
+			// It is called by the provider whenever data source values should be read to update state.
+			readFunc: func(ctx context.Context, config ProjectDataSource, c *client.Client, resp *datasource.ReadResponse) (ProjectDataSource, error) {
+				out, err := c.GetProject(ctx, config.Name.ValueString(), config.TeamID.ValueString())
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error reading project",
+						fmt.Sprintf("Could not read project %s %s, unexpected error: %s",
+							config.TeamID.ValueString(),
+							config.Name.ValueString(),
+							err,
+						),
+					)
+					return ProjectDataSource{}, err
+				}
+
+				environmentVariables, err := c.GetEnvironmentVariables(ctx, out.ID, out.TeamID)
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error reading project environment variables",
+						"Could not read project, unexpected error: "+err.Error(),
+					)
+					return ProjectDataSource{}, err
+				}
+				result, err := convertResponseToProjectDataSource(ctx, out, nullProject, environmentVariables)
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error converting project response to model",
+						"Could not read project, unexpected error: "+err.Error(),
+					)
+					return ProjectDataSource{}, err
+				}
+				tflog.Info(ctx, "read project", map[string]interface{}{
+					"team_id":    result.TeamID.ValueString(),
+					"project_id": result.ID.ValueString(),
+				})
+				return result, nil
+			},
+		},
 	}
 }
 
 type projectDataSource struct {
 	*dataSourceConfigurer
+	*reader[ProjectDataSource]
 }
 
 // Schema returns the schema information for a project data source
@@ -424,56 +465,4 @@ func convertResponseToProjectDataSource(ctx context.Context, response client.Pro
 		SkewProtection:                project.SkewProtection,
 		ResourceConfig:                project.ResourceConfig,
 	}, nil
-}
-
-// Read will read project information by requesting it from the Vercel API, and will update terraform
-// with this information.
-// It is called by the provider whenever data source values should be read to update state.
-func (d *projectDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var config ProjectDataSource
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	out, err := d.client.GetProject(ctx, config.Name.ValueString(), config.TeamID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading project",
-			fmt.Sprintf("Could not read project %s %s, unexpected error: %s",
-				config.TeamID.ValueString(),
-				config.Name.ValueString(),
-				err,
-			),
-		)
-		return
-	}
-
-	environmentVariables, err := d.client.GetEnvironmentVariables(ctx, out.ID, out.TeamID)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading project environment variables",
-			"Could not read project, unexpected error: "+err.Error(),
-		)
-		return
-	}
-	result, err := convertResponseToProjectDataSource(ctx, out, nullProject, environmentVariables)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error converting project response to model",
-			"Could not read project, unexpected error: "+err.Error(),
-		)
-		return
-	}
-	tflog.Info(ctx, "read project", map[string]interface{}{
-		"team_id":    result.TeamID.ValueString(),
-		"project_id": result.ID.ValueString(),
-	})
-
-	diags = resp.State.Set(ctx, result)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 }

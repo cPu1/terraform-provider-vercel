@@ -9,11 +9,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/vercel/terraform-provider-vercel/client"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
 var (
-	_ datasource.DataSource              = &edgeConfigSchemaDataSource{}
 	_ datasource.DataSourceWithConfigure = &edgeConfigSchemaDataSource{}
 )
 
@@ -22,11 +22,48 @@ func newEdgeConfigSchemaDataSource() datasource.DataSource {
 		dataSourceConfigurer: &dataSourceConfigurer{
 			dataSourceNameSuffix: "_edge_config_schema",
 		},
+		reader: &reader[EdgeConfigSchema]{
+			// readFunc will read the edgeConfig information by requesting it from the Vercel API, and will update terraform
+			// with this information.
+			// It is called by the provider whenever data source values should be read to update state.
+			readFunc: func(ctx context.Context, config EdgeConfigSchema, c *client.Client, resp *datasource.ReadResponse) (EdgeConfigSchema, error) {
+				out, err := c.GetEdgeConfigSchema(ctx, config.ID.ValueString(), config.TeamID.ValueString())
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error reading Edge Config Schema",
+						fmt.Sprintf("Could not get Edge Config Schema %s %s, unexpected error: %s",
+							config.TeamID.ValueString(),
+							config.ID.ValueString(),
+							err,
+						),
+					)
+					return EdgeConfigSchema{}, err
+				}
+
+				def, err := json.Marshal(out.Definition)
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error reading Edge Config Schema",
+						fmt.Sprintf("Could not marshal Edge Config Schema %s %s, unexpected error: %s",
+							config.TeamID.ValueString(), config.ID.ValueString(), err,
+						),
+					)
+					return EdgeConfigSchema{}, err
+				}
+				result := responseToEdgeConfigSchema(out, types.StringValue(string(def)))
+				tflog.Info(ctx, "read edge config schema", map[string]interface{}{
+					"team_id":        result.TeamID.ValueString(),
+					"edge_config_id": result.ID.ValueString(),
+				})
+				return result, nil
+			},
+		},
 	}
 }
 
 type edgeConfigSchemaDataSource struct {
 	*dataSourceConfigurer
+	*reader[EdgeConfigSchema]
 }
 
 // Schema returns the schema information for an edgeConfig data source
@@ -49,52 +86,5 @@ An Edge Config Schema provides an existing Edge Config with a JSON schema. Use s
 				Description: "The ID of the team the Edge Config should exist under. Required when configuring a team resource if a default team has not been set in the provider.",
 			},
 		},
-	}
-}
-
-// Read will read the edgeConfig information by requesting it from the Vercel API, and will update terraform
-// with this information.
-// It is called by the provider whenever data source values should be read to update state.
-func (d *edgeConfigSchemaDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var config EdgeConfigSchema
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	out, err := d.client.GetEdgeConfigSchema(ctx, config.ID.ValueString(), config.TeamID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading Edge Config Schema",
-			fmt.Sprintf("Could not get Edge Config Schema %s %s, unexpected error: %s",
-				config.TeamID.ValueString(),
-				config.ID.ValueString(),
-				err,
-			),
-		)
-		return
-	}
-
-	def, err := json.Marshal(out.Definition)
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading Edge Config Schema",
-			fmt.Sprintf("Could not marshal Edge Config Schema %s %s, unexpected error: %s",
-				config.TeamID.ValueString(), config.ID.ValueString(), err,
-			),
-		)
-		return
-	}
-	result := responseToEdgeConfigSchema(out, types.StringValue(string(def)))
-	tflog.Info(ctx, "read edge config schema", map[string]interface{}{
-		"team_id":        result.TeamID.ValueString(),
-		"edge_config_id": result.ID.ValueString(),
-	})
-
-	diags = resp.State.Set(ctx, result)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
 	}
 }

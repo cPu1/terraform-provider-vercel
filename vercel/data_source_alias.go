@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
+	"github.com/vercel/terraform-provider-vercel/client"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -19,11 +20,38 @@ func newAliasDataSource() datasource.DataSource {
 		dataSourceConfigurer: &dataSourceConfigurer{
 			dataSourceNameSuffix: "_alias",
 		},
+		reader: &reader[Alias]{
+			// readFunc will read the alias information by requesting it from the Vercel API, and will update terraform
+			// with this information.
+			// It is called by the provider whenever data source values should be read to update state.
+			readFunc: func(ctx context.Context, a Alias, client *client.Client, resp *datasource.ReadResponse) (Alias, error) {
+				out, err := client.GetAlias(ctx, a.Alias.ValueString(), a.TeamID.ValueString())
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error reading alias",
+						fmt.Sprintf("Could not read alias %s %s, unexpected error: %s",
+							a.TeamID.ValueString(),
+							a.Alias.ValueString(),
+							err,
+						),
+					)
+					return Alias{}, err
+				}
+
+				result := convertResponseToAlias(out, a)
+				tflog.Info(ctx, "read alias", map[string]interface{}{
+					"team_id": result.TeamID.ValueString(),
+					"alias":   result.Alias.ValueString(),
+				})
+				return result, nil
+			},
+		},
 	}
 }
 
 type aliasDataSource struct {
 	*dataSourceConfigurer
+	*reader[Alias]
 }
 
 // Schema returns the schema information for an alias data source
@@ -51,42 +79,5 @@ An Alias allows a ` + "`vercel_deployment` to be accessed through a different UR
 				Computed: true,
 			},
 		},
-	}
-}
-
-// Read will read the alias information by requesting it from the Vercel API, and will update terraform
-// with this information.
-// It is called by the provider whenever data source values should be read to update state.
-func (d *aliasDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	var config Alias
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	out, err := d.client.GetAlias(ctx, config.Alias.ValueString(), config.TeamID.ValueString())
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading alias",
-			fmt.Sprintf("Could not read alias %s %s, unexpected error: %s",
-				config.TeamID.ValueString(),
-				config.Alias.ValueString(),
-				err,
-			),
-		)
-		return
-	}
-
-	result := convertResponseToAlias(out, config)
-	tflog.Info(ctx, "read alias", map[string]interface{}{
-		"team_id": result.TeamID.ValueString(),
-		"alias":   result.Alias.ValueString(),
-	})
-
-	diags = resp.State.Set(ctx, result)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
 	}
 }

@@ -63,3 +63,26 @@ func (r *resourceConfigurer) Configure(_ context.Context, req resource.Configure
 
 	r.client = client
 }
+
+type reader[T any] struct {
+	client   *client.Client
+	readFunc func(context.Context, T, *client.Client, *datasource.ReadResponse) (T, error)
+}
+
+func (r *reader[T]) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var config T
+	diags := req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	// out, err := r.client.GetAlias(ctx, config.Alias.ValueString(), config.TeamID.ValueString())
+	result, err := r.readFunc(ctx, config, r.client, resp)
+	if err != nil {
+		return
+	}
+
+	diags = resp.State.Set(ctx, result)
+	resp.Diagnostics.Append(diags...)
+}

@@ -21,11 +21,42 @@ func newProjectFunctionCPUDataSource() datasource.DataSource {
 		dataSourceConfigurer: &dataSourceConfigurer{
 			dataSourceNameSuffix: "_project_function_cpu",
 		},
+		reader: &reader[ProjectFunctionCPU]{
+			readFunc: func(ctx context.Context, config ProjectFunctionCPU, c *client.Client, resp *datasource.ReadResponse) (ProjectFunctionCPU, error) {
+				resp.Diagnostics.Append(
+					diag.NewErrorDiagnostic("`vercel_project_function_cpu` data source deprecated", "use `vercel_project` data source and its `resource_config` attribute instead"),
+				)
+				out, err := c.GetProjectFunctionCPU(ctx, config.ProjectID.ValueString(), config.TeamID.ValueString())
+				if client.NotFound(err) {
+					resp.State.RemoveResource(ctx)
+					return ProjectFunctionCPU{}, err
+				}
+				if err != nil {
+					resp.Diagnostics.AddError(
+						"Error reading project Function CPU",
+						fmt.Sprintf("Could not get Project Function CPU %s %s, unexpected error: %s",
+							config.TeamID.ValueString(),
+							config.ProjectID.ValueString(),
+							err,
+						),
+					)
+					return ProjectFunctionCPU{}, err
+				}
+
+				result := convertResponseToProjectFunctionCPU(out)
+				tflog.Info(ctx, "read project function cpu", map[string]interface{}{
+					"team_id":    result.TeamID.ValueString(),
+					"project_id": result.ProjectID.ValueString(),
+				})
+				return result, nil
+			},
+		},
 	}
 }
 
 type projectFunctionCPUDataSource struct {
 	*dataSourceConfigurer
+	*reader[ProjectFunctionCPU]
 }
 
 func (r *projectFunctionCPUDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -57,46 +88,5 @@ This controls the maximum amount of CPU utilization your Serverless Functions ca
 				Computed:    true,
 			},
 		},
-	}
-}
-
-func (d *projectFunctionCPUDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	resp.Diagnostics.Append(
-		diag.NewErrorDiagnostic("`vercel_project_function_cpu` data source deprecated", "use `vercel_project` data source and its `resource_config` attribute instead"),
-	)
-	var config ProjectFunctionCPU
-	diags := req.Config.Get(ctx, &config)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	out, err := d.client.GetProjectFunctionCPU(ctx, config.ProjectID.ValueString(), config.TeamID.ValueString())
-	if client.NotFound(err) {
-		resp.State.RemoveResource(ctx)
-		return
-	}
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading project Function CPU",
-			fmt.Sprintf("Could not get Project Function CPU %s %s, unexpected error: %s",
-				config.TeamID.ValueString(),
-				config.ProjectID.ValueString(),
-				err,
-			),
-		)
-		return
-	}
-
-	result := convertResponseToProjectFunctionCPU(out)
-	tflog.Info(ctx, "read project function cpu", map[string]interface{}{
-		"team_id":    result.TeamID.ValueString(),
-		"project_id": result.ProjectID.ValueString(),
-	})
-
-	diags = resp.State.Set(ctx, result)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
 	}
 }
